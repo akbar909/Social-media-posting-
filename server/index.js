@@ -1,11 +1,11 @@
 import bodyParser from "body-parser";
-import cors from "cors";
+import { v2 as cloudinaryV2 } from "cloudinary";
 import dotenv from "dotenv";
 import express from "express";
+import formidable from "formidable";
 import helmet from "helmet";
 import mongoose from "mongoose";
 import morgan from "morgan";
-import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 import { register } from "./controllers/auth.js";
@@ -41,7 +41,7 @@ app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
 
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   res.header("Access-Control-Allow-Credentials", "true");
 
@@ -52,20 +52,44 @@ app.use((req, res, next) => {
   next();
 });
 
-/* FILE STORAGE */
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/assets");
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
+/* CLOUDINARY CONFIGURATION */
+cloudinaryV2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-const upload = multer({ storage });
 
 /* ROUTES WITH FILES */
-app.post("/auth/register", upload.single("picture"), register);
-app.post("/posts", verifyToken, upload.single("picture"), createPost);
+app.post("/auth/register", async (req, res, next) => {
+  const form = formidable({ multiples: false });
+  form.parse(req, async (err, fields, files) => {
+    if (err) return res.status(400).json({ error: err.message });
+    let picturePath = "";
+    if (files.picture) {
+      const result = await cloudinaryV2.uploader.upload(files.picture.filepath, {
+        folder: "user_pictures",
+      });
+      picturePath = result.public_id + "." + result.format;
+    }
+    req.body = { ...fields, picturePath };
+    register(req, res, next);
+  });
+});
+app.post("/posts", verifyToken, async (req, res, next) => {
+  const form = formidable({ multiples: false });
+  form.parse(req, async (err, fields, files) => {
+    if (err) return res.status(400).json({ error: err.message });
+    let picturePath = "";
+    if (files.picture) {
+      const result = await cloudinaryV2.uploader.upload(files.picture.filepath, {
+        folder: "post_pictures",
+      });
+      picturePath = result.public_id + "." + result.format;
+    }
+    req.body = { ...fields, picturePath };
+    createPost(req, res, next);
+  });
+});
 
 /* ROUTES */
 app.use("/auth", authRoutes);

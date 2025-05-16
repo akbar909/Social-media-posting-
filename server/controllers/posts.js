@@ -13,7 +13,7 @@ export const createPost = async (req, res) => {
       location: user.location,
       description,
       userPicturePath: user.picturePath,
-      picturePath,
+      picturePath, // already set from Cloudinary
       likes: {},
       comments: [],
     });

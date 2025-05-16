@@ -24,7 +24,7 @@ export const register = async (req, res) => {
       lastName,
       email,
       password: passwordHash,
-      picturePath,
+      picturePath, // already set from Cloudinary
       friends,
       location,
       occupation,
