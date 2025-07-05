@@ -47,6 +47,16 @@ const PostWidget = ({
     dispatch(setPost({ post: updatedPost }));
   };
 
+  let imageSrc = null;
+  if (picturePath) {
+    const isCloudinary = picturePath.includes("user_pictures/") || picturePath.includes("post_pictures/");
+    if (isCloudinary) {
+      imageSrc = `https://res.cloudinary.com/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload/${picturePath}`;
+    } else {
+      imageSrc = `https://social-media-posting-backend.vercel.app/assets/${picturePath}`;
+    }
+  }
+
   return (
     <WidgetWrapper m="2rem 0">
       <Friend
@@ -64,7 +74,7 @@ const PostWidget = ({
           height="auto"
           alt="post"
           style={{ borderRadius: "0.75rem", marginTop: "0.75rem" }}
-          src={`https://social-media-posting-backend.vercel.app/assets/${picturePath}`}
+          src={imageSrc}
         />
       )}
       <FlexBetween mt="0.25rem">

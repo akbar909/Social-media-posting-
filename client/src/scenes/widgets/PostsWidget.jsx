@@ -1,4 +1,4 @@
-import { useState,useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
 import PostWidget from "./PostWidget";
@@ -42,11 +42,14 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Ensure posts is always an array
+  const postsArray = Array.isArray(posts) ? posts : [];
+
   if (loading) return <div>Loading...</div>;
 
   return (
     <>
-      {posts.map(
+      {postsArray.map(
         ({
           _id,
           userId,
